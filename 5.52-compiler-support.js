@@ -7,21 +7,33 @@ function announce_output(out) {
 
 // --- Primitive support (eceval.js) ---
 // note: not the same as eceval.js versions, using js-native style arrays everywhere
-function car(a) { return a[0] }
-function cdr(a) { return a.slice(1) }
-function cadr(a) { return a[1]; }
-function caddr(a) { return a[2]; }
+function list(a) { return a }
+function car(a) { return a[0][0] }
+function cdr(a) { return a[0].slice(1) }
+function caar(a) { return a[0][0][0]; }
+function cadr(a) { return a[0][1]; }
+function cdar(a) { return a[0][0].slice(1); }
+function cddr(a) { return a[0].slice(2); }
+function caaar(a) { return a[0][0][0][0]; }
+function caadr(a) { return a[0][1][0]; }
+function cadar(a) { return a[0][0][1]; }
+function caddr(a) { return a[0][2]; }
+function cdaar(a) { return a[0][0][0].slice(1); }
+function cdadr(a) { return a[0][1].slice(1); }
+function cddar(a) { return a[0][0].slice(2); }
+function cdddr(a) { return a[0].slice(3) }
 
-function sum(a) { return a.length ? a[0] + sum(cdr(a)) : 0; }
-function product(a) { return a.length ? a[0] * product(cdr(a)) : 1 }
+function sum(a) { return a.length ? a[0] + sum(a.slice(1)) : 0; }
+function product(a) { return a.length ? a[0] * product(a.slice(1)) : 1 }
 function difference(a) { return a[0] - a[1] }
 function dividend(a) { return a[0] / a[1] }
 
-function equals(a) { return a[0] == a[1] && (a.length > 2 ? equals(cdr(a)) :  true) }
+function equals(a) { return a[0] == a[1] && (a.length > 2 ? equals(a.slice(1)) :  true) }
 function gt(a) { return a[0] > a[1] }
 function lt(a) { return a[0] < a[1] }
 function gte(a) { return a[0] >= a[1] }
 function lte(a) { return a[0] <= a[1] }
+
 
 function lookup_primitive_op(variable) {
     return { 
@@ -34,6 +46,21 @@ function lookup_primitive_op(variable) {
 	'<': lt,
 	'>=': gte,
 	'<=': lte,
+	'list': list,
+	'car': car,
+	'cdr': cdr,
+	'caar': caar,
+	'cadr': cadr,
+	'cdar': cdar,
+	'cddr': cddr,
+	'caaar': caaar,
+	'caadr': caadr,
+	'cadar': cadar,
+	'caddr': caddr,
+	'cdaar': cdaar,
+	'cdadr': cdadr,
+	'cddar': cddar,
+	'cdddr': cdddr,
     }[variable];
 }
 function get_primitive_procedure(variable) {
@@ -57,7 +84,10 @@ function compiled_procedure_env(p) { return caddr(p) }
 // not supporting this currently!
 function compound_procedure(p) { return false }
 
-function explicit_apply_procedure(p) { return p == 'apply' }
+var explicit_apply_key = ['explicit-apply'];
+function explicit_apply_procedure(p) { return p == explicit_apply_key }
+function explicit_apply_get_procedure(a) { return a[0] }
+function explicit_apply_get_args(a) { return a[1] }
 
 // --- Stack, Environment and data storage (eceval.js) ---
 var stack = ['STACK'];
@@ -107,13 +137,14 @@ function _lookup_variable_value(variable, env, lookup_exp, include_context) {
     }
     if (lookup_primitive_op(variable)) {
 	return get_primitive_procedure(variable);
+    } else if (variable == 'apply') {
+	return explicit_apply_key;
     }
     return unbound_variable_error;
 }
 // debugging "tap"
 function lookup_variable_value(variable, env) {
     var x = _lookup_variable_value(variable, env);
-    // console.log(variable + ': ' + x);
     return x;
 }
 
