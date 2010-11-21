@@ -261,6 +261,7 @@
 	(primitive-branch (make-label 'primitive-branch))
         (compiled-branch (make-label 'compiled-branch))
 	(interpreted-branch (make-label 'interpreted-branch))
+	(read-branch (make-label 'read-branch))                                   ; added for "read"
         (after-call (make-label 'after-call)))
     (let ((compiled-linkage
            (if (eq? linkage 'next) after-call linkage)))
@@ -273,6 +274,8 @@
 			"    branch = '" primitive-branch "';\n"
 			"  } else if (explicit_apply_procedure(proc)) {\n"
 			"    branch = '" explicit-apply-branch "';\n"
+			"  } else if (read_procedure(proc)) {\n"
+			"    branch = '" read-branch "';\n"
 			"  } else if (compound_procedure(proc)) {\n"
 			"    branch = '" interpreted-branch "';\n"
 			"  } else {\n"
@@ -290,14 +293,22 @@
 	 (parallel-instruction-sequences
 	  ; code added just to check in real time whether
 	  ; this is an explicit (apply ...) -- quite inefficient!
-	  (append-instruction-sequences                         
-	   (label-header explicit-apply-branch)
-	   (make-instruction-sequence                           
-	    '(proc argl) '(proc argl)
-	    (string-append "  proc = explicit_apply_get_procedure(argl);\n"
-			   "  argl = explicit_apply_get_args(argl);\n"
-			   "  branch = '" compile-procedure-call-start "'\;\n"
-			   "  break;\n")))
+	  (parallel-instruction-sequences
+	   (append-instruction-sequences                         
+	    (label-header explicit-apply-branch)
+	    (make-instruction-sequence                           
+	     '(proc argl) '(proc argl)
+	     (string-append "  proc = explicit_apply_get_procedure(argl);\n"
+			    "  argl = explicit_apply_get_args(argl);\n"
+			    "  branch = '" compile-procedure-call-start "';\n"
+			    "  break;\n")))
+	   (append-instruction-sequences
+	    (label-header read-branch)
+	    (make-instruction-sequence
+	     '() '()
+	     (string-append "  continue_to = '" (x->string compiled-linkage) "';\n"
+			    "  branch = 'read';\n"
+			    "  break;\n"))))
 	  (append-instruction-sequences
 	   (label-header primitive-branch)
 	   (end-with-linkage linkage
@@ -461,10 +472,11 @@
   (string-append "function step() {\n"
 		 "switch (branch) {\n"
 		 "case 'main':\n\n"
-		 (caddr (compile exp 'val 'next))
-		 "\n\n  branch = 'done';\n"
-		 "break;\n"
 
+		 (caddr (compile exp 'val 'next))
+
+		 "\n\n  branch = 'done';\n"
+		 "  break;\n"
 		 "case 'unknown-procedure':\n"
 		 "  val = 'unknown-procedure type: ' + proc;\n"
 		 "  branch = 'signal-error';\n"
@@ -488,5 +500,3 @@
       (write-string (compile-with-wrapper exp)))))
       
 '(COMPILER LOADED)
-
-(compile-to-file '(apply * (list 9 2 3 2)))

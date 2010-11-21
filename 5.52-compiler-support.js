@@ -4,6 +4,47 @@ function announce_output(out) {
     $('#repl').append($('<div class="output" />').html(('' + out).replace(/\n/g,'<br />')));
 }
 
+function wait_for_input(focus_on_repl) {
+    var new_input = $('<div class="input" contenteditable="true" />');
+    $('#repl').append('<div class="prompt">&raquo;&nbsp;</div>').append(new_input);
+    new_input.addBindings()
+    if (focus_on_repl) {
+	new_input.focus();
+    }
+    setTimeout(function() { $('#repl').scrollTo('max', 250, {axis:'y'}) }, 5); // scroll to bottom
+}
+
+$.fn.addBindings = function() {
+    return this.bind('keydown','return', function() {
+	$('.input').unbind('keydown'); // disable all others
+	receive_input($(this).html(), true);
+	return false; // prevent bubble
+    }).bind('keydown','up', function() {
+	var current_history_selection = $('.history-selection');
+	if (current_history_selection.length) {
+	    current_history_selection.removeClass('history-selection');
+	} else {
+	    current_history_selection = $(this);
+	}
+	// TODO: filter out items without text
+	set_new_history($(this), current_history_selection.prevAll('.input').first());
+	return false;
+    }).bind('keydown','down', function() {
+	var current_history_selection = $('.history-selection');
+	if (current_history_selection.length) {
+	    current_history_selection.removeClass('history-selection');
+	    var next_item = current_history_selection.nextAll('.input').first();
+	    set_new_history($(this), next_item[0] == this ? $(undefined) : next_item);
+	}
+	return false;
+    });
+};
+
+function receive_input(input) {
+    // todo replace with expression parsing
+    val = parseInt(input);
+    machine_loop('start_with_continue');
+}
 
 // --- Primitive support (eceval.js) ---
 // note: not the same as eceval.js versions, using js-native style arrays everywhere
@@ -89,6 +130,9 @@ function explicit_apply_procedure(p) { return p == explicit_apply_key }
 function explicit_apply_get_procedure(a) { return a[0] }
 function explicit_apply_get_args(a) { return a[1] }
 
+var read_key = ['read'];
+function read_procedure(p) { return p == read_key }
+
 // --- Stack, Environment and data storage (eceval.js) ---
 var stack = ['STACK'];
 //  no need to worry about dupes, right? instanceof Array ? x.slice(0) : x
@@ -135,10 +179,13 @@ function _lookup_variable_value(variable, env, lookup_exp, include_context) {
 	    }
 	}
     }
+    // standard primitives and "special" primitives
     if (lookup_primitive_op(variable)) {
 	return get_primitive_procedure(variable);
     } else if (variable == 'apply') {
 	return explicit_apply_key;
+    } else if (variable == 'read') {
+	return read_key;
     }
     return unbound_variable_error;
 }
@@ -171,13 +218,14 @@ var branch;
 var continue_to;
 var val;
 var proc;
+var read_return_to;
 
 var compapp; // NOTE: shouldn't ever be used; unsupported!
 
-function machine_loop() {
-    branch = 'main';
+function machine_loop(skip_to_continue) {
+    branch = skip_to_continue ? continue_to : 'main';
     var count = 0;
-    while(branch !== 'done') {
+    while(branch !== 'done' && branch !== 'read') {
 	// console.log(branch);
 	step();
 	if (count++ > 12399) {
@@ -185,7 +233,21 @@ function machine_loop() {
 	    console.log('infinite loop guard');
 	}
     }
-    announce_output(val);
+
+    if (branch == 'read') {
+	wait_for_input('focus_on_repl');
+
+	// how would this work?
+	// trap this in the same way we trap explicit-apply
+	// we need to create a new temporary label! read-return-blah
+	// but that might not work, since we only know at run time that a particular
+	// command is actually a read! is that true?
+	// well, if it's handled like apply, I think it's okay
+	//  we'll just detect if it's a read command at run-time
+	// and re-enter at that point, having set val
+    } else {
+	announce_output(val);
+    }
 }
 
 $(document).ready(function () {

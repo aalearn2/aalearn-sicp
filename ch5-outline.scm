@@ -2568,4 +2568,7 @@ answer
 ;;  when we apply, the provenance tree gets mutated some
 
 
+;;  * _ Exercise 5.52
+(compile-to-file '(begin (* (+ (read) 11) (read))))
 
+; TODO: read, display, newline, error, map, possibly quoted items?
