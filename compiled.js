@@ -2,163 +2,210 @@ function step() {
 switch (branch) {
 case 'main':
 
-  proc = lookup_variable_value('*', env);
+  proc = make_compiled_procedure('entry420', env);
+  branch = 'after-lambda419';
+  break;
+case 'entry420':
+  env = compiled_procedure_env(proc);
+  env = extend_environment([ 'input' ], argl, env);
+  proc = lookup_variable_value('+', env);
+  save(continue_to);
   save(proc);
   save(env);
-  proc = lookup_variable_value('read', env);
-  argl = [];
-case 'compile-procedure-call-start277':
+  proc = lookup_variable_value('cadr', env);
+  val = lookup_variable_value('input', env);
+  argl = [val];
+case 'compile-procedure-call-start434':
   if (primitive_procedure(proc)) {
-    branch = 'primitive-branch275';
+    branch = 'primitive-branch432';
+    break;
   } else if (explicit_apply_procedure(proc)) {
-    branch = 'explicit-apply-branch276';
+    branch = 'explicit-apply-branch433';
+    break;
   } else if (read_procedure(proc)) {
-    branch = 'read-branch272';
+    branch = 'read-branch429';
+    break;
   } else if (compound_procedure(proc)) {
-    branch = 'interpreted-branch273';
-  } else {
-    branch = 'unknown-procedure';
+    branch = 'interpreted-branch430';
+    break;
   }
-  break;
-case 'compiled-branch274':
-  continue_to = 'after-call271';
+case 'compiled-branch431':
+  continue_to = 'after-call428';
   branch = compiled_procedure_entry(proc);
   break;
-case 'interpreted-branch273':
-  continue_to = 'after-call271';
+case 'interpreted-branch430':
+  continue_to = 'after-call428';
   save(continue_to);
   branch = compapp;
   break;
-case 'explicit-apply-branch276':
+case 'explicit-apply-branch433':
   proc = explicit_apply_get_procedure(argl);
   argl = explicit_apply_get_args(argl);
-  branch = 'compile-procedure-call-start277';
+  branch = 'compile-procedure-call-start434';
   break;
-case 'read-branch272':
-  continue_to = 'after-call271';
+case 'read-branch429':
+  continue_to = 'after-call428';
   branch = 'read';
   break;
-case 'primitive-branch275':
+case 'primitive-branch432':
   val = proc[1](argl);
-case 'after-call271':
+case 'after-call428':
   argl = [val];
   env = restore();
   save(argl);
-  proc = lookup_variable_value('+', env);
-  save(proc);
-  val = 11;
+  proc = lookup_variable_value('car', env);
+  val = lookup_variable_value('input', env);
   argl = [val];
-  save(argl);
+case 'compile-procedure-call-start427':
+  if (primitive_procedure(proc)) {
+    branch = 'primitive-branch425';
+    break;
+  } else if (explicit_apply_procedure(proc)) {
+    branch = 'explicit-apply-branch426';
+    break;
+  } else if (read_procedure(proc)) {
+    branch = 'read-branch422';
+    break;
+  } else if (compound_procedure(proc)) {
+    branch = 'interpreted-branch423';
+    break;
+  }
+case 'compiled-branch424':
+  continue_to = 'after-call421';
+  branch = compiled_procedure_entry(proc);
+  break;
+case 'interpreted-branch423':
+  continue_to = 'after-call421';
+  save(continue_to);
+  branch = compapp;
+  break;
+case 'explicit-apply-branch426':
+  proc = explicit_apply_get_procedure(argl);
+  argl = explicit_apply_get_args(argl);
+  branch = 'compile-procedure-call-start427';
+  break;
+case 'read-branch422':
+  continue_to = 'after-call421';
+  branch = 'read';
+  break;
+case 'primitive-branch425':
+  val = proc[1](argl);
+case 'after-call421':
+  argl = restore();
+  argl.unshift(val);
+  proc = restore();
+  continue_to = restore();
+case 'compile-procedure-call-start441':
+  if (primitive_procedure(proc)) {
+    branch = 'primitive-branch439';
+    break;
+  } else if (explicit_apply_procedure(proc)) {
+    branch = 'explicit-apply-branch440';
+    break;
+  } else if (read_procedure(proc)) {
+    branch = 'read-branch436';
+    break;
+  } else if (compound_procedure(proc)) {
+    branch = 'interpreted-branch437';
+    break;
+  }
+case 'compiled-branch438':
+  branch = compiled_procedure_entry(proc);
+  break;
+case 'interpreted-branch437':
+  save(continue_to);
+  branch = compapp;
+  break;
+case 'explicit-apply-branch440':
+  proc = explicit_apply_get_procedure(argl);
+  argl = explicit_apply_get_args(argl);
+  branch = 'compile-procedure-call-start441';
+  break;
+case 'read-branch436':
+  continue_to = 'return';
+  branch = 'read';
+  break;
+case 'primitive-branch439':
+  val = proc[1](argl);
+  branch = continue_to;
+break;
+case 'after-call435':
+case 'after-lambda419':
+  save(proc);
   proc = lookup_variable_value('read', env);
   argl = [];
-case 'compile-procedure-call-start263':
+case 'compile-procedure-call-start418':
   if (primitive_procedure(proc)) {
-    branch = 'primitive-branch261';
+    branch = 'primitive-branch416';
+    break;
   } else if (explicit_apply_procedure(proc)) {
-    branch = 'explicit-apply-branch262';
+    branch = 'explicit-apply-branch417';
+    break;
   } else if (read_procedure(proc)) {
-    branch = 'read-branch258';
+    branch = 'read-branch413';
+    break;
   } else if (compound_procedure(proc)) {
-    branch = 'interpreted-branch259';
-  } else {
-    branch = 'unknown-procedure';
+    branch = 'interpreted-branch414';
+    break;
   }
-  break;
-case 'compiled-branch260':
-  continue_to = 'after-call257';
+case 'compiled-branch415':
+  continue_to = 'after-call412';
   branch = compiled_procedure_entry(proc);
   break;
-case 'interpreted-branch259':
-  continue_to = 'after-call257';
+case 'interpreted-branch414':
+  continue_to = 'after-call412';
   save(continue_to);
   branch = compapp;
   break;
-case 'explicit-apply-branch262':
+case 'explicit-apply-branch417':
   proc = explicit_apply_get_procedure(argl);
   argl = explicit_apply_get_args(argl);
-  branch = 'compile-procedure-call-start263';
+  branch = 'compile-procedure-call-start418';
   break;
-case 'read-branch258':
-  continue_to = 'after-call257';
+case 'read-branch413':
+  continue_to = 'after-call412';
   branch = 'read';
   break;
-case 'primitive-branch261':
+case 'primitive-branch416':
   val = proc[1](argl);
-case 'after-call257':
-  argl = restore();
-  argl.unshift(val);
+case 'after-call412':
+  argl = [val];
   proc = restore();
-case 'compile-procedure-call-start270':
+case 'compile-procedure-call-start448':
   if (primitive_procedure(proc)) {
-    branch = 'primitive-branch268';
+    branch = 'primitive-branch446';
+    break;
   } else if (explicit_apply_procedure(proc)) {
-    branch = 'explicit-apply-branch269';
+    branch = 'explicit-apply-branch447';
+    break;
   } else if (read_procedure(proc)) {
-    branch = 'read-branch265';
+    branch = 'read-branch443';
+    break;
   } else if (compound_procedure(proc)) {
-    branch = 'interpreted-branch266';
-  } else {
-    branch = 'unknown-procedure';
+    branch = 'interpreted-branch444';
+    break;
   }
-  break;
-case 'compiled-branch267':
-  continue_to = 'after-call264';
+case 'compiled-branch445':
+  continue_to = 'after-call442';
   branch = compiled_procedure_entry(proc);
   break;
-case 'interpreted-branch266':
-  continue_to = 'after-call264';
+case 'interpreted-branch444':
+  continue_to = 'after-call442';
   save(continue_to);
   branch = compapp;
   break;
-case 'explicit-apply-branch269':
+case 'explicit-apply-branch447':
   proc = explicit_apply_get_procedure(argl);
   argl = explicit_apply_get_args(argl);
-  branch = 'compile-procedure-call-start270';
+  branch = 'compile-procedure-call-start448';
   break;
-case 'read-branch265':
-  continue_to = 'after-call264';
+case 'read-branch443':
+  continue_to = 'after-call442';
   branch = 'read';
   break;
-case 'primitive-branch268':
+case 'primitive-branch446':
   val = proc[1](argl);
-case 'after-call264':
-  argl = restore();
-  argl.unshift(val);
-  proc = restore();
-case 'compile-procedure-call-start284':
-  if (primitive_procedure(proc)) {
-    branch = 'primitive-branch282';
-  } else if (explicit_apply_procedure(proc)) {
-    branch = 'explicit-apply-branch283';
-  } else if (read_procedure(proc)) {
-    branch = 'read-branch279';
-  } else if (compound_procedure(proc)) {
-    branch = 'interpreted-branch280';
-  } else {
-    branch = 'unknown-procedure';
-  }
-  break;
-case 'compiled-branch281':
-  continue_to = 'after-call278';
-  branch = compiled_procedure_entry(proc);
-  break;
-case 'interpreted-branch280':
-  continue_to = 'after-call278';
-  save(continue_to);
-  branch = compapp;
-  break;
-case 'explicit-apply-branch283':
-  proc = explicit_apply_get_procedure(argl);
-  argl = explicit_apply_get_args(argl);
-  branch = 'compile-procedure-call-start284';
-  break;
-case 'read-branch279':
-  continue_to = 'after-call278';
-  branch = 'read';
-  break;
-case 'primitive-branch282':
-  val = proc[1](argl);
-case 'after-call278':
+case 'after-call442':
 
 
   branch = 'done';

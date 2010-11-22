@@ -1,7 +1,7 @@
 
 // --- Input/output (eceval-io.js) ---
 function announce_output(out) {
-    $('#repl').append($('<div class="output" />').html(('' + out).replace(/\n/g,'<br />')));
+    $('#repl').append($('<div class="output" />').html(('' + stringify_scheme_exp(out)).replace(/\n/g,'<br />')));
 }
 
 function wait_for_input(focus_on_repl) {
@@ -12,6 +12,10 @@ function wait_for_input(focus_on_repl) {
 	new_input.focus();
     }
     setTimeout(function() { $('#repl').scrollTo('max', 250, {axis:'y'}) }, 5); // scroll to bottom
+}
+
+function set_new_history(target, source) {
+    target.text(source.addClass('history-selection').text());
 }
 
 $.fn.addBindings = function() {
@@ -42,7 +46,7 @@ $.fn.addBindings = function() {
 
 function receive_input(input) {
     // todo replace with expression parsing
-    val = parseInt(input);
+    val = parse(tokenize(input))[0]; // one expression only
     machine_loop('start_with_continue');
 }
 
@@ -102,6 +106,9 @@ function lookup_primitive_op(variable) {
 	'cdadr': cdadr,
 	'cddar': cddar,
 	'cdddr': cdddr,
+	'display': function(o) { announce_output(o) },
+	'newline': function() { announce_output("\n") },
+
     }[variable];
 }
 function get_primitive_procedure(variable) {
@@ -117,8 +124,8 @@ function make_compiled_procedure(entry, env) {
     return ['compiled', entry, env];
 }
 function compiled_procedure(p) { return is_tagged_list(p, 'compiled') }
-function compiled_procedure_entry(p) { return cadr(p) }
-function compiled_procedure_env(p) { return caddr(p) }
+function compiled_procedure_entry(p) { return p[1] }
+function compiled_procedure_env(p) { return p[2] }
 
 
 // could be used to allow compiled code to call interpreted code (ex 5.47)
@@ -246,6 +253,7 @@ function machine_loop(skip_to_continue) {
 	//  we'll just detect if it's a read command at run-time
 	// and re-enter at that point, having set val
     } else {
+	console.log(val);
 	announce_output(val);
     }
 }

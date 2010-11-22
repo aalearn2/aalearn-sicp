@@ -2569,6 +2569,11 @@ answer
 
 
 ;;  * _ Exercise 5.52
-(compile-to-file '(begin (* (+ (read) 11) (read))))
+; (compile-to-file '(begin (* (+ (read) 11) (read))))
+; (compile-to-file '(let ((x 4)) (* x x)))
 
-; TODO: read, display, newline, error, map, possibly quoted items?
+(compile-to-file '(let ((input (read))) (+ (car input) (cadr input))))
+; TODO: 
+;  read needs to parse right
+;  probably quoting?
+;  cond?

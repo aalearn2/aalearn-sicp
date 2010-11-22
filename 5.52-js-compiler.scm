@@ -191,7 +191,9 @@
     (cond ((null? items) "")
 	  ((null? (cdr items)) (car items))
 	  (else (string-append (car items) delimiter (string-join (cdr items))))))
-  (string-join (map (lambda (x) (string-append "'" (x->string x) "'")) a) ","))
+  (string-append "[ "
+		 (string-join (map (lambda (x) (string-append "'" (x->string x) "'")) a) ",")
+		 " ]"))
 			
 (define (compile-lambda-body exp proc-entry)
   (let ((formals (lambda-parameters exp)))
@@ -272,16 +274,17 @@
 	 '(proc) '()
 	 (string-append "  if (primitive_procedure(proc)) {\n"
 			"    branch = '" primitive-branch "';\n"
+			"    break;\n"
 			"  } else if (explicit_apply_procedure(proc)) {\n"
 			"    branch = '" explicit-apply-branch "';\n"
+			"    break;\n"
 			"  } else if (read_procedure(proc)) {\n"
 			"    branch = '" read-branch "';\n"
+			"    break;\n"
 			"  } else if (compound_procedure(proc)) {\n"
 			"    branch = '" interpreted-branch "';\n"
-			"  } else {\n"
-			"    branch = 'unknown-procedure';\n"
-			"  }\n"
-			"  break;\n")))
+			"    break;\n"
+			"  }\n"))) ; note: compiled procedures fall through
        (parallel-instruction-sequences
 	(append-instruction-sequences
 	 (label-header compiled-branch)
