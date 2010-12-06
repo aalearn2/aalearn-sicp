@@ -52,7 +52,19 @@ function receive_input(input) {
 
 // --- Primitive support (eceval.js) ---
 // note: not the same as eceval.js versions, using js-native style arrays everywhere
+function sum(a) { return a.length ? a[0] + sum(a.slice(1)) : 0; }
+function product(a) { return a.length ? a[0] * product(a.slice(1)) : 1 }
+function difference(a) { return a[0] - a[1] }
+function dividend(a) { return a[0] / a[1] }
+
+function equals(a) { return a[0] == a[1] && (a.length > 2 ? equals(a.slice(1)) :  true) }
+function gt(a) { return a[0] > a[1] }
+function lt(a) { return a[0] < a[1] }
+function gte(a) { return a[0] >= a[1] }
+function lte(a) { return a[0] <= a[1] }
+
 function list(a) { return a }
+function cons(a) { return a[1] == null ? [a[0]] : [a[0], a[1]] }
 function car(a) { return a[0][0] }
 function cdr(a) { return a[0].slice(1) }
 function caar(a) { return a[0][0][0]; }
@@ -68,17 +80,15 @@ function cdadr(a) { return a[0][1].slice(1); }
 function cddar(a) { return a[0][0].slice(2); }
 function cdddr(a) { return a[0].slice(3) }
 
-function sum(a) { return a.length ? a[0] + sum(a.slice(1)) : 0; }
-function product(a) { return a.length ? a[0] * product(a.slice(1)) : 1 }
-function difference(a) { return a[0] - a[1] }
-function dividend(a) { return a[0] / a[1] }
+function is_pair(a) { return a[0] && a[0].length }
+function is_null(a) { return a[0].length == 0 }
 
-function equals(a) { return a[0] == a[1] && (a.length > 2 ? equals(a.slice(1)) :  true) }
-function gt(a) { return a[0] > a[1] }
-function lt(a) { return a[0] < a[1] }
-function gte(a) { return a[0] >= a[1] }
-function lte(a) { return a[0] <= a[1] }
+function set_car(a) { a[0][0] = a[1]; return a[1] }
+function set_cdr(a) { a[0].splice(1,a[0].length-1); a[0].push.apply(a[0], a[1]); return a[1] }
 
+function is_number(a) { return typeof a[0] == 'number' }
+function is_string(a) { return typeof a[0] == 'string' }
+function is_symbol(a) { return false }
 
 function lookup_primitive_op(variable) {
     return { 
@@ -87,11 +97,13 @@ function lookup_primitive_op(variable) {
 	'-': difference,
 	'/': dividend,
 	'=': equals,
+	'eq?': equals,
 	'>': gt,
 	'<': lt,
 	'>=': gte,
 	'<=': lte,
 	'list': list,
+	'cons': cons,
 	'car': car,
 	'cdr': cdr,
 	'caar': caar,
@@ -106,7 +118,16 @@ function lookup_primitive_op(variable) {
 	'cdadr': cdadr,
 	'cddar': cddar,
 	'cdddr': cdddr,
-	'display': function(o) { announce_output(o) },
+	'pair?': is_pair,
+	'null?': is_null,
+	'set-car!': set_car,
+	'set-cdr!': set_cdr,
+
+	'number?': is_number,
+	'string?': is_string,
+	'symbol?': is_symbol,
+
+	'display': function(o) { announce_output(o[0]) },
 	'newline': function() { announce_output("\n") },
 
     }[variable];
@@ -187,15 +208,29 @@ function _lookup_variable_value(variable, env, lookup_exp, include_context) {
 	}
     }
     // standard primitives and "special" primitives
-    if (lookup_primitive_op(variable)) {
+    if (lookup_builtin_value(variable)) {
+	return get_builtin_value(variable);
+    } else if (lookup_primitive_op(variable)) {
 	return get_primitive_procedure(variable);
+    } else if (variable == 'nil') {
+	return null;
     } else if (variable == 'apply') {
 	return explicit_apply_key;
     } else if (variable == 'read') {
 	return read_key;
     }
+    console.log('Support Warning: variable not found: ' + variable);
     return unbound_variable_error;
 }
+
+function lookup_builtin_value(variable) {
+    return variable == 'true' || variable == '#t' || variable == 'false' || variable == '#f';
+}
+
+function get_builtin_value(variable) {
+    return {'true': true, '#t': true, 'false': false, '#f': false}[variable]
+}
+
 // debugging "tap"
 function lookup_variable_value(variable, env) {
     var x = _lookup_variable_value(variable, env);
@@ -233,9 +268,11 @@ function machine_loop(skip_to_continue) {
     branch = skip_to_continue ? continue_to : 'main';
     var count = 0;
     while(branch !== 'done' && branch !== 'read') {
-	// console.log(branch);
+	console.log(branch);
 	step();
-	if (count++ > 12399) {
+	if (!(count % 100000)) console.log(branch);
+	    
+	if (count++ > 512399) {
 	    branch = 'done';
 	    console.log('infinite loop guard');
 	}

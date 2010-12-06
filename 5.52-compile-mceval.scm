@@ -1,6 +1,19 @@
 (compile-to-file '(begin
 (define apply-in-underlying-scheme apply)
 
+;;; Added support for 5.52
+(define (map f a)
+  (if (null? a)
+      a
+      (cons (f (car a)) (cdr a))))
+
+(define (length a)
+  (define (iter a i)
+    (if (null? a) 
+	i 
+	(iter (cdr a) (+ i 1))))
+  (iter a 0))
+    
 ;;;SECTION 4.1.1
 
 (define (eval exp env)
@@ -40,7 +53,7 @@
 
 (define (list-of-values exps env)
   (if (no-operands? exps)
-      '()
+      nil
       (cons (eval (first-operand exps) env)
             (list-of-values (rest-operands exps) env))))
 
@@ -209,7 +222,7 @@
 
 (define (first-frame env) (car env))
 
-(define the-empty-environment '())
+(define the-empty-environment nil)
 
 (define (make-frame variables values)
   (cons variables values))
@@ -293,6 +306,10 @@
         (list 'cons cons)
         (list 'null? null?)
 ;;      more primitives
+	(list '+ +)
+	(list '* *)
+	(list '- -)
+	(list '/ /)
         ))
 
 (define (primitive-procedure-names)
@@ -330,15 +347,19 @@
 
 (define (user-print object)
   (if (compound-procedure? object)
-      (display (list 'compound-procedure
+      (display (list "compound-procedure"
                      (procedure-parameters object)
                      (procedure-body object)
-                     '<procedure-env>))
+                     "<procedure-env>"))
       (display object)))
 
-;;;Following are commented out so as not to be evaluated when
-;;; the file is loaded.
+
 (define the-global-environment (setup-environment))
 (driver-loop)
 
 ))
+
+;;;Following are commented out so as not to be evaluated when
+;;; the file is loaded.
+;; (define the-global-environment (setup-environment))
+;; (driver-loop)

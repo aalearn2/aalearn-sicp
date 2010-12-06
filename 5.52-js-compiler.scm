@@ -14,6 +14,10 @@
 ;;**implementation-dependent loading of syntax procedures
 (load "ch5-syntax.scm")			;section 4.1.2 syntax procedures
 
+;; override syntax version to get \n to be double-escaped
+(define (error->combination exp)
+  (make-begin
+   (map make-user-print (cons "ERROR: " (append (cdr exp) (list "\\n"))))))
 
 ;;;SECTION 5.5.1
 
@@ -64,7 +68,7 @@
         (else
          (make-instruction-sequence 
 	  '() '()
-	  (code-line "branch = '" (x->string linkage) "';\n  break")))))
+	  (code-line "branch = '" (x->string linkage false) "';\n  break")))))
 
 (define (end-with-linkage linkage instruction-sequence)
   (preserving '(continue_to)
@@ -73,29 +77,29 @@
 
 
 ;;;simple expressions
-(define (x->string e) 
+(define (x->string e quote?)
   (cond ((number? e) (number->string e))
-	((symbol? e) (symbol->string e))
-	(else e)))
+	((symbol? e) (if quote? (string-append "\"" (symbol->string e) "\"") (symbol->string e)))
+	(else (if quote? (string-append "\"" e "\"") e))))
 
 (define (compile-self-evaluating exp target linkage)
   (end-with-linkage linkage
    (make-instruction-sequence 
     '() (list target)
-    (code-line (symbol->string target) " = " (x->string exp)))))
+    (code-line (symbol->string target) " = " (x->string exp 'quote)))))
 
 (define (compile-quoted exp target linkage)
   (end-with-linkage linkage
    (make-instruction-sequence 
     '() (list target)
-    (code-line (symbol->string target) " = " (text-of-quotation exp)))))
+    (code-line (symbol->string target) " = " (x->string (text-of-quotation exp) 'quote)))))
 
 (define (compile-variable exp target linkage)
   (end-with-linkage linkage
    (make-instruction-sequence 
     '(env) (list target)
     ;; TODO: check if variable is unbound?
-    (code-line (symbol->string target) " = lookup_variable_value('" (x->string exp) "', env)"))))
+    (code-line (symbol->string target) " = lookup_variable_value('" (x->string exp false) "', env)"))))
 
 (define (compile-assignment exp target linkage)
   (let ((var (assignment-variable exp))
@@ -106,7 +110,7 @@
       get-value-code
       (make-instruction-sequence 
        '(env val) (list target)
-       (code-line "set_variable_value(" (x->string var) ", val, env)"))))))
+       (code-line "set_variable_value(" (x->string var 'quote) ", val, env)"))))))
 
 (define (compile-definition exp target linkage)
   (let ((var (definition-variable exp))
@@ -190,9 +194,9 @@
   (define (string-join items delimiter)
     (cond ((null? items) "")
 	  ((null? (cdr items)) (car items))
-	  (else (string-append (car items) delimiter (string-join (cdr items))))))
+	  (else (string-append (car items) delimiter (string-join (cdr items) delimiter)))))
   (string-append "[ "
-		 (string-join (map (lambda (x) (string-append "'" (x->string x) "'")) a) ",")
+		 (string-join (map (lambda (x) (string-append "'" (x->string x false) "'")) a) ",")
 		 " ]"))
 			
 (define (compile-lambda-body exp proc-entry)
@@ -309,7 +313,7 @@
 	    (label-header read-branch)
 	    (make-instruction-sequence
 	     '() '()
-	     (string-append "  continue_to = '" (x->string compiled-linkage) "';\n"
+	     (string-append "  continue_to = '" (x->string compiled-linkage false) "';\n"
 			    "  branch = 'read';\n"
 			    "  break;\n"))))
 	  (append-instruction-sequences
@@ -329,7 +333,7 @@
   (cond ((and (eq? target 'val) (not (eq? linkage 'return)))
          (make-instruction-sequence 
 	  '(proc) all-regs
-	  (code-line "continue_to = '" (x->string linkage) "';\n"
+	  (code-line "continue_to = '" linkage "';\n"
 		     "  branch = compiled_procedure_entry(proc);\n"
 		     "  break")))
         ((and (not (eq? target 'val))

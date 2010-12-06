@@ -2569,11 +2569,21 @@ answer
 
 
 ;;  * _ Exercise 5.52
-; (compile-to-file '(begin (* (+ (read) 11) (read))))
-; (compile-to-file '(let ((x 4)) (* x x)))
+;; compile 5.52-js-compiler.scm
+;; load 5.52-compiled.html to run the program
 
-(compile-to-file '(let ((input (read))) (+ (car input) (cadr input))))
-; TODO: 
-;  read needs to parse right
-;  probably quoting?
-;  cond?
+;; Examples:
+;; (compile-to-file '(begin (* (+ (read) 11) (read))))
+;; (compile-to-file '(let ((x 4)) (* x x)))
+
+;; (compile-to-file '(let ((input (read))) (+ (car input) (cadr input))))
+(compile-to-file '(begin (define (fib n) (if (< n 2) 1 (+ (fib (- n 1)) (fib (- n 2))))) (fib (read))))
+
+;; TODO: 
+;;  handle comments
+;;  ? read needs to parse right -- might be done
+;;  ? double-quoted strings -- might be better
+;;  ? probably quoting
+;;  ? cond
+
+;; see 5.52-compile-mceval.scm
